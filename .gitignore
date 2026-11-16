@@ -405,19 +405,19 @@ FodyWeavers.xsd
 # Starshot portable build output & local data
 app/
 config.ini
-StarshotDatabase.db
-StarshotDatabase.db-wal
-StarshotDatabase.db-shm
-
-
-# Starshot portable build output & local data
-app/
-config.ini
+config.sjson
 StarshotDatabase.db
 StarshotDatabase.db-wal
 StarshotDatabase.db-shm
 Screenshots/
+/images_for_test/
 
 
 # 源码内 Assets 需要纳入版本控制（覆盖通用 Assets/ 忽略，针对 VS 模板的 MSIX Assets 规则）
 !src/Starshot/Assets/
+
+# Agents 相关
+AGENTS.md
+.planning/hdr-sdr-investigation/findings.md
+.planning/hdr-sdr-investigation/progress.md
+.planning/hdr-sdr-investigation/task_plan.md

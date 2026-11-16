@@ -1,3 +1,5 @@
+> **下游测试构建: Starshot HDR Fork 2.6.5-hdr.1.** 这个分支对原有的HDR→SDR转换做了校准和统一。已禁用上游自动/手动更新和遥测功能。它是一个数据独立的App，采用离线版Inno Setup安装程序。请看[构建说明，更改和验证限制](packaging/README.md)。以下是上游原始文档的内容，描述了原有功能；本分支未覆盖测试。
+
 <div align="center">
 
 <img src="src/logo.png" width="300" alt="Starshot Logo">

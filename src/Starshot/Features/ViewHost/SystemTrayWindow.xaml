@@ -2,6 +2,7 @@
   x:Class="Starshot.Features.ViewHost.SystemTrayWindow"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:app="using:Starshot"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:fluent="using:FluentIcons.WinUI"
   xmlns:hn="using:H.NotifyIcon"
@@ -20,7 +21,7 @@
       LeftClickCommand="{x:Bind ShowMainWindowCommand}"
       NoLeftClickDelay="True"
       RightClickCommand="{x:Bind ShowCommand}"
-      ToolTipText="Starshot"
+      ToolTipText="{x:Bind app:AppConfig.AppName}"
     />
 
     <StackPanel Padding="8">

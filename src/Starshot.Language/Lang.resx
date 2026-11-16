@@ -818,7 +818,7 @@
     <value>Privacy Policy</value>
   </data>
   <data name="Starshot_AboutPrivacy" xml:space="preserve">
-    <value>All data acquired and generated during your use of this software is stored exclusively on your personal device. For usage analytics purposes, we only use a randomly generated anonymous statistical identifier, and we do not collect any personal or private information.</value>
+    <value>This downstream build disables upstream automatic/manual updates and the background telemetry heartbeat. Screenshots remain on your device.</value>
   </data>
   <data name="Starshot_OpenDataFolder" xml:space="preserve">
     <value>Open Data Folder</value>

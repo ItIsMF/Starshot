@@ -3,11 +3,12 @@
   x:Class="Starshot.Features.ViewHost.WelcomeWindow"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:app="using:Starshot"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:lang="using:Starshot.Language"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:sf="using:Starshot.Frameworks"
-  Title="Starshot"
+  Title="{x:Bind app:AppConfig.AppName}"
   x:DefaultBindMode="OneWay"
   mc:Ignorable="d"
 >

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <UseWinUI>true</UseWinUI>
+    <CsWinRTAotOptimizerEnabled>false</CsWinRTAotOptimizerEnabled>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.2" ExcludeAssets="all" />
+    <PackageReference Include="Starward.Win2D" Version="1.3.2-release.1" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260529003" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.8249" />
+    <ProjectReference Include="../../../src/Starshot/Starshot.csproj" />
+  </ItemGroup>
+</Project>

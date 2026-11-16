@@ -513,14 +513,10 @@ public sealed partial class ImageBatchConvertWindow : PageBase
                         item,
                         cancellationToken
                     ),
-                    // avif/jxl → jpg/png 走进程内管线（HDR 源过截图同款 tonemap）：CLI avifdec/djxl 直转对 PQ 内容
-                    // 不做色调映射，naive 压 8bit 导致画面发灰
-                    (".avif" or ".jxl", ".jpg" or ".png") => ConvertAvifJxlToJpgPngAsync(
+                    (".jpg" or ".png" or ".jxr" or ".webp" or ".heic" or ".avif" or ".jxl", ".jpg" or ".png") => ConvertToSdrAsync(
                         item,
                         cancellationToken
                     ),
-                    (".jpg" or ".png" or ".jxr" or ".webp" or ".heic", ".jpg" or ".png") =>
-                        ConvertJpegPngJxrWebpHeicToJpgPngAsync(item, cancellationToken),
                     (".jxr" or ".webp" or ".heic" or ".avif" or ".jxl", ".avif" or ".jxl") =>
                         ConvertJxrWebpHeicAvifJxlToAvifJxlAsync(item, cancellationToken),
                     _ => throw new NotSupportedException(
@@ -646,12 +642,11 @@ public sealed partial class ImageBatchConvertWindow : PageBase
     }
 
     /// <summary>
-    /// avif/jxl → jpg/png：进程内解码（ImageLoader）+ HDR 源过截图同款 TonemapToSdr。
-    /// 取代原 CLI avifdec/djxl 直转——CLI 对 PQ 内容不做色调映射，naive 压 8bit 导致发灰。
+    /// 所有普通 JPG/PNG 输出先识别 HDR；HDR 使用共享映射，SDR 保留原编码路径。
     /// 编码分流：JPG 走 ImageSaver.SaveAsJpegAsync（与查看器 SDR JPEG 同一条线）；
     /// PNG 走 ImageSaver.SaveAsPngAsync（截图验证过的管线——WIC 的 PNG 编码器不认 JPEG 参数，混用会 CreateAsync 直接抛异常）。
     /// </summary>
-    private async Task ConvertAvifJxlToJpgPngAsync(
+    private async Task ConvertToSdrAsync(
         ImageConvertItem item,
         CancellationToken cancellationToken = default
     )
@@ -666,6 +661,11 @@ public sealed partial class ImageBatchConvertWindow : PageBase
             item.SourceFilePath,
             cancellationToken
         );
+        if (!imageInfo.HDR && item.SourceExtension is not (".avif" or ".jxl"))
+        {
+            await ConvertJpegPngJxrWebpHeicToJpgPngAsync(item, cancellationToken);
+            return;
+        }
         int width = (int)imageInfo.CanvasBitmap.SizeInPixels.Width;
         int height = (int)imageInfo.CanvasBitmap.SizeInPixels.Height;
 

@@ -35,8 +35,8 @@
         </cwc:Segmented>
       </StackPanel>
 
-      <!--  更新源（安装版线只藏源选择：源在 kachina config 写死；直连开关保留供 release notes 拉取）  -->
-      <StackPanel Spacing="8">
+      <!-- 下游停用更新。 -->
+      <StackPanel Spacing="8" Visibility="Collapsed">
         <TextBlock FontSize="20" Text="{x:Bind lang:Lang.Starshot_Update}" />
         <cwc:Segmented
           x:Name="Segmented_UpdateSource"

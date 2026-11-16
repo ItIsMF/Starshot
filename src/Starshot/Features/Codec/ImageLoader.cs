@@ -333,7 +333,9 @@ internal static class ImageLoader
         var reader = new PngReader(fs);
         PngChunk chunk;
         ColorPrimaries? colorPrimaries = null;
-        while ((chunk = reader.GetNextChunk()).Type != PngChunkType.IEND)
+        bool hdr10 = false;
+        while ((chunk = reader.GetNextChunk()).Type != PngChunkType.IEND
+            && chunk.Type != PngChunkType.IDAT)
         {
             try
             {
@@ -341,6 +343,8 @@ internal static class ImageLoader
                 if (chunk.Type == PngChunkType.cICP)
                 {
                     PngcICPChunk cicp = chunk.GetcICPChunk();
+                    hdr10 = cicp.ColorPrimaries == 9 && cicp.TransferFunction == 16
+                        && cicp.MatrixCoefficients == 0 && cicp.FullRangeFlag == 1;
                     colorPrimaries = cicp.ColorPrimaries switch
                     {
                         1 => ColorPrimaries.BT709,
@@ -355,14 +359,12 @@ internal static class ImageLoader
                     byte[] icc = chunk.GetiCCPChunk(out string profileName);
                     info.IccData = icc;
                     colorPrimaries = ICCHelper.GetColorPrimariesFromIccData(icc);
-                    break;
                 }
                 if (chunk.Type == PngChunkType.sRGB)
                 {
                     colorPrimaries = ColorPrimaries.BT709;
-                    break;
                 }
-                if (chunk.Type == PngChunkType.cHRM)
+                if (chunk.Type == PngChunkType.cHRM && colorPrimaries is null)
                 {
                     PngcHRMChunk chrm = chunk.GetcHRMChunk();
                     colorPrimaries = new ColorPrimaries
@@ -372,7 +374,6 @@ internal static class ImageLoader
                         Blue = new Vector2(chrm.BlueX, chrm.BlueY),
                         White = new Vector2(chrm.WhitePointX, chrm.WhitePointY),
                     };
-                    break;
                 }
             }
             catch { }
@@ -380,7 +381,7 @@ internal static class ImageLoader
 
         info.ColorPrimaries = colorPrimaries ?? ColorPrimaries.BT709;
         fs.Position = 0;
-        if (info.ColorPrimaries.Id == 9)
+        if (hdr10)
         {
             using var bitmap = await CanvasBitmap
                 .LoadAsync(CanvasDevice.GetSharedDevice(), fs.AsRandomAccessStream())

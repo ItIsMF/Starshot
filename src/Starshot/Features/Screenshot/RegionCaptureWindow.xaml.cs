@@ -101,7 +101,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         // 窗口设置（单例，只一次）
         // 不写 WindowEx.MainWindowId：那是主窗口的静态锚（CenterInScreen 用），覆盖层窗口
         // 既不用居中，写它会歪曲 UpdateWindow/WelcomeWindow 的定位（且单例重建时会反复覆盖）
-        Title = "Starshot";
+        Title = AppConfig.AppName;
         AppWindow.IsShownInSwitchers = false;
         SystemBackdrop = new TransparentBackdrop();
 
@@ -201,7 +201,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
         // 更新帧（旧的已在 CloseWindow 释放并清引用）
         _canvasOriginal = canvas;
-        _displayBitmap = CreateDisplayBitmap(canvas, physW, physH, sdrWhiteLevel);
+        _displayBitmap = CreateDisplayBitmap(canvas, sdrWhiteLevel, AppConfig.SdrWhiteLevel);
         _ownsDisplayBitmap = !ReferenceEquals(_displayBitmap, canvas);
 
         // 重置交互状态（为本次截图清场）
@@ -244,9 +244,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     private static CanvasBitmap CreateDisplayBitmap(
         CanvasBitmap source,
-        int w,
-        int h,
-        float sdrWhiteLevel
+        float sdrWhiteLevel,
+        float outputWhiteLevel
     )
     {
         if (
@@ -258,33 +257,11 @@ public sealed partial class RegionCaptureWindow : WindowEx
             return source;
         }
 
-        var device = CanvasDevice.GetSharedDevice();
-        var sdr = new CanvasRenderTarget(
-            device,
-            w,
-            h,
-            96,
-            DirectXPixelFormat.B8G8R8A8UIntNormalized,
-            CanvasAlphaMode.Premultiplied
-        );
-        using (var ds = sdr.CreateDrawingSession())
-        {
-            var wle = new WhiteLevelAdjustmentEffect
-            {
-                Source = source,
-                InputWhiteLevel = 80,
-                OutputWhiteLevel = sdrWhiteLevel,
-                BufferPrecision = CanvasBufferPrecision.Precision16Float,
-            };
-            var gamma = new SrgbGammaEffect
-            {
-                Source = wle,
-                GammaMode = SrgbGammaMode.OETF,
-                BufferPrecision = CanvasBufferPrecision.Precision16Float,
-            };
-            ds.DrawImage(gamma);
-        }
-        return sdr;
+        float maxCLL = ScreenCaptureService.GetContentLightLevels(source).MaxCLL;
+        // 与保存时相同的内容判定：HDR 桌面上的纯 SDR 内容只恢复白电平。
+        return maxCLL > sdrWhiteLevel + 5
+            ? ScreenCaptureService.TonemapToSdr(source, outputWhiteLevel, maxCLL)
+            : ScreenCaptureService.NormalizeSdrCapture(source, sdrWhiteLevel);
     }
 
     // 直接 P/Invoke DwmGetWindowAttribute，避免 Vanara 泛型重载在 DWMWA_CLOAKED 上 marshal 不可靠

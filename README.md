@@ -1,3 +1,5 @@
+> **Downstream test build: Starshot HDR Fork 2.6.5-hdr.1.** This fork calibrates and unifies ordinary HDR→SDR conversion. Upstream automatic/manual updates and telemetry are disabled. It uses separate app/data identities and an offline Inno Setup installer. See [build instructions, changes and verification limits](packaging/README.md). The upstream documentation below also describes features outside this fork's tested scope.
+
 <div align="center">
 
 <img src="src/logo.png" width="300" alt="Starshot Logo">

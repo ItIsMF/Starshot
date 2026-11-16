@@ -1384,19 +1384,17 @@ public sealed partial class ImageViewWindow : Window
         {
             // SDR 显示模式
             displayMode = 1;
-            var toneMapEffect = new HdrToneMapEffect
+            var toneMapEffect = new SdrToneMapEffect
             {
                 Source = _sourceBitmap,
-                DisplayMode = HdrToneMapEffectDisplayMode.Hdr,
                 InputMaxLuminance = MaxCLL,
-                OutputMaxLuminance = SDRLuminance,
-                BufferPrecision = CanvasBufferPrecision.Precision16Float,
+                OutputWhiteLevel = SDRLuminance,
             };
             output = new WhiteLevelAdjustmentEffect
             {
                 Source = toneMapEffect,
                 InputWhiteLevel = sdrWhiteLevel,
-                OutputWhiteLevel = SDRLuminance,
+                OutputWhiteLevel = 80,
                 BufferPrecision = CanvasBufferPrecision.Precision16Float,
             };
         }
@@ -2115,7 +2113,7 @@ public sealed partial class ImageViewWindow : Window
                 outputNits = SDRLuminance;
             ColorPrimaries colorPrimaries = ImageColorPrimaries;
             string name = Path.GetFileNameWithoutExtension(CurrentFileName);
-            ICanvasImage output = GetDrawOutput(out int displayMode);
+            GetDrawOutput(out int displayMode);
             bool imageHdr =
                 bitmap.Format
                 is DirectXPixelFormat.R16G16B16A16Float
@@ -2227,17 +2225,17 @@ public sealed partial class ImageViewWindow : Window
                     return;
                 }
                 (path, int filterIndex) = picked.Value;
-                // SDR JPEG / SDR PNG：渲染 SDR 显示管线（HdrToneMap + 白电平 + 色彩管理）到 8bit，所见即所得
+                // SDR 文件使用相对 SDR 白的像素，显示器白电平和色彩矩阵只用于预览。
                 encodeTask = filterIndex switch
                 {
                     0 => ImageSaver.SaveAsJpegAsync(
-                        sdr8 = RenderToSdr8bit(output, bitmap),
+                        sdr8 = ScreenCaptureService.TonemapToSdr(bitmap, outputNits, maxCLL),
                         ms,
                         100
                     ),
                     1 => ImageSaver.SaveAsUhdrAsync(bitmap, ms, maxCLL, outputNits),
                     2 => ImageSaver.SaveAsPngAsync(
-                        sdr8 = RenderToSdr8bit(output, bitmap),
+                        sdr8 = ScreenCaptureService.TonemapToSdr(bitmap, outputNits, maxCLL),
                         ms,
                         ColorPrimaries.BT709,
                         null,
@@ -2270,41 +2268,6 @@ public sealed partial class ImageViewWindow : Window
         {
             ShowInfo(InfoBarSeverity.Error, Lang.ImageViewWindow_FailedToSaveImage, ex.Message, 0);
             _logger.LogError(ex, "Failed to export image");
-        }
-    }
-
-    /// <summary>
-    /// 把显示管线图像（SDR 模式的 tonemap 链）渲染到 8bit B8G8R8A8——所见即所得的 SDR 导出像素。
-    /// 链输出是线性 scRGB，画进 8bit 前必须补 sRGB OETF（显示路径由 DWM 对 float swapchain 编码，
-    /// 落盘文件没有这层），否则按 sRGB 解读严重偏暗——与 TonemapToSdr / Ultra HDR 基图同款处理。
-    /// </summary>
-    private static CanvasRenderTarget RenderToSdr8bit(ICanvasImage output, CanvasBitmap sizeSource)
-    {
-        var rt = new CanvasRenderTarget(
-            CanvasDevice.GetSharedDevice(),
-            sizeSource.SizeInPixels.Width,
-            sizeSource.SizeInPixels.Height,
-            96,
-            DirectXPixelFormat.B8G8R8A8UIntNormalized,
-            CanvasAlphaMode.Premultiplied
-        );
-        try
-        {
-            using var ds = rt.CreateDrawingSession();
-            using var gamma = new SrgbGammaEffect
-            {
-                Source = output,
-                GammaMode = SrgbGammaMode.OETF,
-                BufferPrecision = CanvasBufferPrecision.Precision16Float,
-            };
-            ds.DrawImage(gamma);
-            return rt;
-        }
-        catch
-        {
-            // 渲染段（设备丢失等）抛出时 rt 还没赋给外层 sdr8，就地释放防 GPU 表面靠 GC 延迟回收
-            rt.Dispose();
-            throw;
         }
     }
 

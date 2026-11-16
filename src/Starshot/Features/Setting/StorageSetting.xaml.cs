@@ -333,7 +333,7 @@ public sealed partial class StorageSetting : PageBase
             // 默认值与 AppConfig.ScreenshotFolder 的 getter 默认一致（我的图片\Starshot）
             string defaultFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-                "Starshot"
+                AppConfig.DataFolderName
             );
             if (
                 string.Equals(
@@ -408,7 +408,7 @@ public sealed partial class StorageSetting : PageBase
     {
         string defaultFolder = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Starshot"
+            AppConfig.DataFolderName
         );
         if (string.Equals(AppConfig.LogFolder, defaultFolder, StringComparison.OrdinalIgnoreCase))
         {
@@ -457,7 +457,7 @@ public sealed partial class StorageSetting : PageBase
     private static string ConfigBackupFolder =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Starshot",
+            AppConfig.DataFolderName,
             "backup"
         );
 

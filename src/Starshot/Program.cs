@@ -30,7 +30,7 @@ public static class Program
     static int Main(string[] args)
     {
         // 通知头部直接显示这个字符串（未打包应用没有注册显示名）
-        SetCurrentProcessExplicitAppUserModelID("Starshot");
+        SetCurrentProcessExplicitAppUserModelID(AppConfig.AppId);
         // 提权子进程：--manage-task create/delete，以管理员权限调 TaskScheduler API 创建/删除任务后退出
         if (args.Length > 0 && args[0] == "--manage-task")
         {
@@ -105,7 +105,7 @@ public static class Program
         {
             string logFile = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Starshot",
+                AppConfig.DataFolderName,
                 "log",
                 "TaskScheduler.log"
             );

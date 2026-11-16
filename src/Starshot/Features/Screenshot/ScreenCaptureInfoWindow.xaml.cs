@@ -16,6 +16,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Hosting;
 using Starshot.Features.Setting;
+using Starshot.Features.Codec;
 using Starshot.Frameworks;
 using Starshot.Helpers;
 using Vanara.PInvoke;
@@ -397,29 +398,32 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
         };
 
         ICanvasImage output = scaleEffect;
+        using var toneMapEffect = new SdrToneMapEffect();
+        using var normalizeEffect = new WhiteLevelAdjustmentEffect();
+        using var gammaEffect = new SrgbGammaEffect();
         if (bitmap.Format is DirectXPixelFormat.R16G16B16A16Float)
         {
-            float sdrWhite = AppConfig.SdrWhiteLevel;
-            HdrToneMapEffect toneMapEffect = new()
+            float peak = maxCLL > 0
+                ? maxCLL
+                : ScreenCaptureService.GetContentLightLevels(bitmap).MaxCLL;
+            float captureWhite = AppConfig.GetSdrWhiteLevelFromDisplays(DisplayArea.FindAll());
+            if (peak > captureWhite + 5)
             {
-                Source = scaleEffect,
-                InputMaxLuminance = maxCLL,
-                OutputMaxLuminance = sdrWhite,
-                DisplayMode = HdrToneMapEffectDisplayMode.Hdr,
-            };
-            WhiteLevelAdjustmentEffect whiteLevelEffect = new()
+                toneMapEffect.Source = scaleEffect;
+                toneMapEffect.InputMaxLuminance = peak;
+                toneMapEffect.OutputWhiteLevel = AppConfig.SdrWhiteLevel;
+                gammaEffect.Source = toneMapEffect;
+            }
+            else
             {
-                Source = toneMapEffect,
-                InputWhiteLevel = 80,
-                OutputWhiteLevel = sdrWhite,
-            };
-            GammaTransferEffect gammaEffect = new()
-            {
-                Source = whiteLevelEffect,
-                RedExponent = 0.4545f,
-                GreenExponent = 0.4545f,
-                BlueExponent = 0.4545f,
-            };
+                normalizeEffect.Source = scaleEffect;
+                normalizeEffect.InputWhiteLevel = 80;
+                normalizeEffect.OutputWhiteLevel = captureWhite;
+                normalizeEffect.BufferPrecision = CanvasBufferPrecision.Precision16Float;
+                gammaEffect.Source = normalizeEffect;
+            }
+            gammaEffect.GammaMode = SrgbGammaMode.OETF;
+            gammaEffect.BufferPrecision = CanvasBufferPrecision.Precision16Float;
             output = gammaEffect;
         }
 

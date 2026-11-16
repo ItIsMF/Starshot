@@ -14,6 +14,10 @@ namespace Starshot;
 
 public static partial class AppConfig
 {
+    public const string AppName = "Starshot HDR Fork";
+    public const string AppId = "Starshot.HDRFork";
+    public const string DataFolderName = "Starshot HDR Fork";
+
     public static string AppVersion { get; private set; }
 
     public static string CacheFolder { get; private set; }
@@ -74,7 +78,7 @@ public static partial class AppConfig
         // LocalAppData 根（日志/缓存默认家，安装版数据位置）
         string localAppData = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Starshot"
+            DataFolderName
         );
 
         // 版本号：Debug 构建显示 "Debug"（日志 Starshot_Debug_*.log + 启动 vDebug）；Release 读 assembly 内嵌
@@ -92,7 +96,7 @@ public static partial class AppConfig
         // 而 config 在欢迎页之后才初始化，读不到用户配置的 LogFolder
         string logFolder = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Starshot"
+            DataFolderName
         );
         CacheFolder = logFolder;
         LogFile = Path.Combine(logFolder, "log", BuildLogFileName());

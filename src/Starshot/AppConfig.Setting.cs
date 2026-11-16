@@ -139,7 +139,7 @@ public static partial class AppConfig
     /// 注册表 <c>HKCU\...\Run\{AutoStartName}</c>，计划任务 <c>\{AutoStartName}</c>。
     /// 改名后旧版注册的 Run 值与计划任务都会失联，需在设置页重开关一次自启 /「高优先级启动」重建。
     /// </summary>
-    public const string AutoStartName = "Starshot.Autorun";
+    public const string AutoStartName = AppId + ".Autorun";
 
     /// <summary>
     /// 开机自启：实时读注册表 HKCU\...\Run\{AutoStartName} 是否存在（用户可能在外部禁用，不能缓存到配置）
@@ -243,7 +243,7 @@ public static partial class AppConfig
 
     /// <summary>
     /// 分发线身份：打包阶段烙在主程序 exe DOS stub（偏移 0x40）里的标志，CI 只对 kachina 安装版产物写入。
-    /// 启动读一次缓存；便携版 exe 无标志恒 false。true 时更新拉起 Starshot.Update.exe、隐藏便携专属 UI。
+    /// 启动读一次缓存；便携版 exe 无标志恒 false。安装版将数据放到独立 LocalAppData，隐藏便携专属 UI。
     /// </summary>
     public static bool Installer => _installer ??= ReadInstallerFlag();
 
@@ -344,7 +344,7 @@ public static partial class AppConfig
     /// <summary>
     /// GitHub 仓库基址（网页版；releases / blob 等链接由此拼接）
     /// </summary>
-    public const string RepoBaseUrl = "https://github.com/loliri/Starshot";
+    public const string RepoBaseUrl = "https://github.com/ItIsMF/Starshot";
 
     /// <summary>
     /// GitHub API 基址（查 release 信息用）
@@ -415,7 +415,7 @@ public static partial class AppConfig
     }
 
     /// <summary>
-    /// 日志/缓存文件夹，默认 %LOCALAPPDATA%\Starshot
+    /// 日志/缓存文件夹，默认 %LOCALAPPDATA%\Starshot HDR Fork
     /// </summary>
     public static string LogFolder
     {
@@ -423,7 +423,7 @@ public static partial class AppConfig
             GetValue(
                 Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Starshot"
+                    DataFolderName
                 )
             )!;
         set
@@ -462,7 +462,7 @@ public static partial class AppConfig
     }
 
     /// <summary>
-    /// 截图文件夹，默认 我的图片/Starshot
+    /// 截图文件夹，默认 我的图片/Starshot HDR Fork
     /// </summary>
     public static string ScreenshotFolder
     {
@@ -470,7 +470,7 @@ public static partial class AppConfig
             GetValue(
                 Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-                    "Starshot"
+                    DataFolderName
                 )
             );
         set

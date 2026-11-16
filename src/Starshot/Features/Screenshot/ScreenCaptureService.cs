@@ -21,6 +21,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX;
+using Windows.Graphics.Effects;
 using Windows.Storage;
 
 namespace Starshot.Features.Screenshot;
@@ -731,14 +732,14 @@ internal class ScreenCaptureService
         // 重名不覆盖：追加 _2、_3 ...（autoConvertSDR 的 jpg 跟随主文件名 ChangeExtension，自动同序唯一）
         filePath = EnsureUniquePath(filePath);
 
-        // 主文件编码：deleteHDR 走 tonemap→SDR（BT709，不写 ICC）；其余按 colorPrimaries 直存 bitmap
+        // 主文件编码：deleteHDR 恢复 SDR 内容的白电平；其余按 colorPrimaries 直存 bitmap
         using MemoryStream ms = new();
         await _encodeSlim.WaitAsync();
         try
         {
             if (deleteHDR)
             {
-                using CanvasRenderTarget sdrBitmap = TonemapToSdr(bitmap, sdrWhiteLevel);
+                using CanvasRenderTarget sdrBitmap = NormalizeSdrCapture(bitmap, sdrWhiteLevel);
                 if (extension is "png")
                     await ImageSaver.SaveAsPngAsync(
                         sdrBitmap,
@@ -845,14 +846,42 @@ internal class ScreenCaptureService
 
     /// <summary>
     /// HDR（R16G16B16A16Float scRGB）→ SDR（R8G8B8A8）色调映射。
-    /// WhiteLevelAdjustment(80→sdrWhiteLevel) + SrgbGamma(OETF)，与覆盖层显示用 tonemap 同逻辑。
-    /// 批量转换 HDR→SDR 复用同一条线（防两套实现各改各的）。
+    /// 压缩高光并归一到 SDR 白后编码 sRGB；文件像素不包含显示器白电平或色域调整。
+    /// 已测量内容亮度的调用方传入 maxCLL，避免重复计算。
     /// </summary>
-    public static CanvasRenderTarget TonemapToSdr(CanvasBitmap hdrBitmap, float sdrWhiteLevel)
+    public static CanvasRenderTarget TonemapToSdr(
+        CanvasBitmap hdrBitmap,
+        float sdrWhiteLevel,
+        float? maxCLL = null
+    )
+    {
+        using var toneMap = new SdrToneMapEffect
+        {
+            Source = hdrBitmap,
+            InputMaxLuminance = maxCLL ?? GetContentLightLevels(hdrBitmap).MaxCLL,
+            OutputWhiteLevel = sdrWhiteLevel,
+        };
+        return RenderToSdr8bit(hdrBitmap, toneMap);
+    }
+
+    internal static CanvasRenderTarget NormalizeSdrCapture(CanvasBitmap bitmap, float sdrWhiteLevel)
+    {
+        // 原本为 SDR 的桌面内容只撤销显示白缩放，不应用 HDR 观感标定。
+        using var normalize = new WhiteLevelAdjustmentEffect
+        {
+            Source = bitmap,
+            InputWhiteLevel = 80,
+            OutputWhiteLevel = sdrWhiteLevel,
+            BufferPrecision = CanvasBufferPrecision.Precision16Float,
+        };
+        return RenderToSdr8bit(bitmap, normalize);
+    }
+
+    private static CanvasRenderTarget RenderToSdr8bit(CanvasBitmap bitmap, IGraphicsEffectSource source)
     {
         var device = CanvasDevice.GetSharedDevice();
-        int w = (int)hdrBitmap.SizeInPixels.Width;
-        int h = (int)hdrBitmap.SizeInPixels.Height;
+        int w = (int)bitmap.SizeInPixels.Width;
+        int h = (int)bitmap.SizeInPixels.Height;
         var sdr = new CanvasRenderTarget(
             device,
             w,
@@ -861,24 +890,23 @@ internal class ScreenCaptureService
             DirectXPixelFormat.R8G8B8A8UIntNormalized,
             CanvasAlphaMode.Premultiplied
         );
-        using (var ds = sdr.CreateDrawingSession())
+        try
         {
-            var wle = new WhiteLevelAdjustmentEffect
+            using var ds = sdr.CreateDrawingSession();
+            using var gamma = new SrgbGammaEffect
             {
-                Source = hdrBitmap,
-                InputWhiteLevel = 80,
-                OutputWhiteLevel = sdrWhiteLevel,
-                BufferPrecision = CanvasBufferPrecision.Precision16Float,
-            };
-            var gamma = new SrgbGammaEffect
-            {
-                Source = wle,
+                Source = source,
                 GammaMode = SrgbGammaMode.OETF,
                 BufferPrecision = CanvasBufferPrecision.Precision16Float,
             };
             ds.DrawImage(gamma);
+            return sdr;
         }
-        return sdr;
+        catch
+        {
+            sdr.Dispose();
+            throw;
+        }
     }
 
     /// <summary>

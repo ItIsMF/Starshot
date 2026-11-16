@@ -108,7 +108,7 @@ int wmain(int argc, wchar_t* argv[])
                         L"Please delete the old folder manually.\n\n"
                         L"Click OK to open the folder, or Cancel to close.";
                 }
-                if (MessageBox(NULL, msg.c_str(), L"Starshot", MB_OKCANCEL | MB_ICONWARNING | MB_SETFOREGROUND) == IDOK)
+                if (MessageBox(NULL, msg.c_str(), L"Starshot HDR Fork", MB_OKCANCEL | MB_ICONWARNING | MB_SETFOREGROUND) == IDOK)
                 {
                     ShellExecute(NULL, L"explore", entry.path().c_str(), NULL, NULL, SW_SHOWNORMAL);
                 }
@@ -121,12 +121,12 @@ int wmain(int argc, wchar_t* argv[])
         int result = MessageBox(NULL,
             L"It seems Starshot is not installed.\n"
             L"Would you like to open the project page to install it?\n\n"
-            L"https://github.com/loliri/Starshot",
-            L"Starshot",
+            L"https://github.com/ItIsMF/Starshot",
+            L"Starshot HDR Fork",
             MB_ICONQUESTION | MB_YESNO | MB_SETFOREGROUND);
         if (result == IDYES)
         {
-            ShellExecute(NULL, L"open", L"https://github.com/loliri/Starshot", NULL, NULL, SW_SHOWNORMAL);
+            ShellExecute(NULL, L"open", L"https://github.com/ItIsMF/Starshot", NULL, NULL, SW_SHOWNORMAL);
         }
     }
 }

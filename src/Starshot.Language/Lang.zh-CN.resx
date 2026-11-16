@@ -818,7 +818,7 @@
     <value>隐私策略</value>
   </data>
   <data name="Starshot_AboutPrivacy" xml:space="preserve">
-    <value>您在使用本软件过程中获取和产生的全部数据，均仅保存在您的个人设备上。为统计产品使用情况，我们仅会使用随机生成的匿名统计标识，不会收集任何个人隐私信息。</value>
+    <value>此下游测试版已停用上游自动更新、手动更新与后台统计心跳。截图保存在本机。</value>
   </data>
   <data name="Starshot_OpenDataFolder" xml:space="preserve">
     <value>打开数据目录</value>

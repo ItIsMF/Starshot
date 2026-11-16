@@ -34,6 +34,8 @@ concurrency:
 
 jobs:
   resolve-version:
+    # This upstream pipeline targets upstream CDN/release services. Fork packages use packaging/build.ps1.
+    if: github.repository == 'loliri/Starshot'
     runs-on: windows-2025-vs2026
     outputs:
       v: ${{ steps.ver.outputs.v }}
